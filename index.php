@@ -1,58 +1,70 @@
 <?php
 require_once __DIR__ . DIRECTORY_SEPARATOR . "inclus" . DIRECTORY_SEPARATOR ."head.php";
+require_once __DIR__ .DIRECTORY_SEPARATOR ."class" . DIRECTORY_SEPARATOR ."Message.php";
+require_once __DIR__ .DIRECTORY_SEPARATOR ."class" . DIRECTORY_SEPARATOR ."LivreDOr.php";
 $file = __DIR__ . DIRECTORY_SEPARATOR . "fichiers" .DIRECTORY_SEPARATOR . "messages.txt";
-if (!empty($_REQUEST))
+$livreDor = new LivreDOr($file);
+if (!empty($_POST))
 {
-   if (mb_strlen($_REQUEST["pseudo"],"UTF-8")<3 || mb_strlen($_REQUEST["mssge"],"UTF-8")<10)
+    $message = new Message($_POST["pseudo"],$_POST["mssge"],time());
+   if (!$message->isValid())
    {
 ?>
-    <h2>Votre pseudo doit avoir plus de 3 characteres et votre message plus de 10 characteres</h2>
+    <h2>Formulaire invalide</h2>
 <?php
+    $tabError = $message->getError();
    }
-   else{
+   else{    
 ?>
     <h2>Votre message a ete envoyer</h2>
 <?php  
-    $tabMessage = [
-                    'username' => $_REQUEST['pseudo'],
-                    'message' => $_REQUEST['mssge'],
-                    'date'=> time()
-    ];
-    if(!file_exists($file))
-    {
-        $resource  = fopen($file,'x+');
-    }
-    else
-    {
-        $resource = fopen($file,'a');
-    }
-    fwrite($resource,json_encode($tabMessage)."\n");
-    fclose($resource);
+   
+    $livreDor-> addMessage($message);
+    $_POST = [];
    }
 }
 ?>
 <h1>LIVRE D'OR</h1>
 
-<?php
-require_once __DIR__ . DIRECTORY_SEPARATOR . "inclus" . DIRECTORY_SEPARATOR ."form.php";
-?>
+<div class="form">
+    <form action="#" method="post">
+        <div>
+            <label for="pseudo">Entrez votre pseudo :</label>
+            <input type="text" name="pseudo" id="pseudo" <?php if(isset($_POST['pseudo'])) :?>value="<?=htmlentities($_POST['pseudo'])?>"<?php endif?>>
+        </div>
+        <?php if (isset( $tabError["username"]))
+            {
+            ?>
+            <div class="erreur">
+                <?=$tabError["username"] ?>
+            </div>
+            <?php
+            }?>
+           
+            <label for="mssge">Entrez votre message :</label>
+            <textarea name="mssge" id="mssge"><?php if(isset($_POST['mssge'])) :?><?=htmlentities($_POST['mssge'])?><?php endif?></textarea>
+            <?php if (isset($tabError["message"]))
+            {
+            ?>
+            <div class="erreur">
+                <?= $tabError["message"] ?>
+            </div>
+            <?php
+            }?>
+       <button type="submit">Envoyer</button>
+    </form>
+</div>
+
 <h1>Vos messages : </h1>
 <div>
     <?php
-    if (file_exists($file))
+    $tabmessage = $livreDor->getMessage();
+    foreach($tabmessage as $mess)
     {
-        $resource = fopen($file,'r');
-        while($line = fgets($resource))
-        {
-            $line = json_decode($line,true);
-            $date = date('D d M o / H : i : s',$line['date']);
-        echo("
-            <P>
-                <strong>{$line['username']}</strong> <em>{$date} </em>  <br> <p>{$line['message']}</p>
-            </P>");
-          
-        }
+        $affiche = Message::fromJson($mess);
+        echo ($affiche ->toHtml());
     }
+    
     ?>
 </div>
 <?php

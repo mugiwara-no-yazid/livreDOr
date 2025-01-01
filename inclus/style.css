@@ -25,3 +25,8 @@ button
     width: 10vw;
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
+.erreur
+{
+    background-color: rgb(239, 61, 61);
+    border: 2px;
+}
